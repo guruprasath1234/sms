@@ -1,0 +1,61 @@
+Student,ID,Subject,Mid-Term,Final,Assignment,Total
+Aarav Sharma,STU1000,Chemistry,51,54,82.2,62.4
+Aarav Sharma,STU1000,Computer Science,89.9,62.5,62.6,71.7
+Aarav Sharma,STU1000,Mathematics,74.9,59.2,61,65
+Aiden Mehta,STU1004,Mathematics,51.3,51.3,72.6,58.4
+Aiden Mehta,STU1004,Physics,63.8,67.7,87.6,73
+Aiden Mehta,STU1004,Computer Science,58.6,72.6,94.7,75.3
+Ananya Bose,STU1016,English,69.7,82.2,69.6,73.8
+Ananya Bose,STU1016,Chemistry,82.5,70.8,77.9,77.1
+Ananya Bose,STU1016,Computer Science,60.3,54.1,71.4,61.9
+Arjun Das,STU1006,Physics,64.5,78.1,97.6,80.1
+Arjun Das,STU1006,Computer Science,87.5,76.4,95.8,86.6
+Arjun Das,STU1006,Chemistry,65.1,82.6,75.1,74.3
+Dev Reddy,STU1014,Physics,70.6,67.3,74.5,70.8
+Dev Reddy,STU1014,Chemistry,52.6,75.6,98.5,75.6
+Dev Reddy,STU1014,Computer Science,78.1,81.8,81.3,80.4
+Emma Shah,STU1011,Physics,75,94.9,62.3,77.4
+Emma Shah,STU1011,Mathematics,63.9,90.6,72.2,75.6
+Emma Shah,STU1011,Chemistry,67.4,74.7,74.1,72.1
+Ishaan Iyer,STU1015,English,88.6,79,87.8,85.1
+Ishaan Iyer,STU1015,Chemistry,71.7,94.3,99.6,88.5
+Ishaan Iyer,STU1015,Computer Science,60.6,76,84.1,73.6
+Kabir Joshi,STU1012,Computer Science,70.7,61.9,71.4,68
+Kabir Joshi,STU1012,Chemistry,89.1,64.3,81.5,78.3
+Kabir Joshi,STU1012,English,89.7,94.2,72.2,85.4
+Kiran Chopra,STU1018,Computer Science,89.2,94.9,88.5,90.9
+Kiran Chopra,STU1018,English,53.1,80.4,96.4,76.6
+Kiran Chopra,STU1018,Chemistry,92.1,85.5,62.4,80
+Mia Gupta,STU1005,Chemistry,69.2,88.1,63.1,73.5
+Mia Gupta,STU1005,Physics,81.1,68.8,99.1,83
+Mia Gupta,STU1005,Mathematics,65.8,90.7,63.7,73.4
+Nadia Pillai,STU1009,Chemistry,66,62.6,93.8,74.1
+Nadia Pillai,STU1009,Computer Science,66.7,55.3,75.7,65.9
+Nadia Pillai,STU1009,Physics,84.8,87.4,65.9,79.4
+Olivia Mishra,STU1013,Physics,75.2,54.1,69.5,66.3
+Olivia Mishra,STU1013,Computer Science,64.4,84.2,69.5,72.7
+Olivia Mishra,STU1013,Chemistry,84,51.8,90.2,75.3
+Priya Kumar,STU1003,Physics,64.9,71.7,75.5,70.7
+Priya Kumar,STU1003,Computer Science,68.7,70.9,68.2,69.3
+Priya Kumar,STU1003,Chemistry,89.5,50.5,84.6,74.9
+Rahul Verma,STU1010,English,82.8,80.7,67.3,76.9
+Rahul Verma,STU1010,Chemistry,59.6,92.3,96.4,82.8
+Rahul Verma,STU1010,Mathematics,62,94.6,95.3,84
+Riya Malhotra,STU1017,Mathematics,93.9,54,83.7,77.2
+Riya Malhotra,STU1017,Physics,58.4,55.7,94.3,69.5
+Riya Malhotra,STU1017,Chemistry,54,57.5,89.2,66.9
+Rohan Singh,STU1002,Physics,90.7,92.1,60.3,81
+Rohan Singh,STU1002,Mathematics,92.9,50.8,62.6,68.8
+Rohan Singh,STU1002,Computer Science,50.6,62.5,61.2,58.1
+Sita Desai,STU1019,Computer Science,64.1,61.7,85,70.3
+Sita Desai,STU1019,Chemistry,72.1,74.2,85.9,77.4
+Sita Desai,STU1019,English,62.5,84.2,80.9,75.9
+Sofia Rao,STU1007,Physics,78.9,63.2,90.2,77.4
+Sofia Rao,STU1007,Computer Science,76,79.9,82,79.3
+Sofia Rao,STU1007,Chemistry,70.2,58.7,62.8,63.9
+Vikram Nair,STU1008,Physics,84.5,59.5,67.4,70.5
+Vikram Nair,STU1008,English,50.7,87.1,92.7,76.8
+Vikram Nair,STU1008,Chemistry,68.7,75.5,65.2,69.8
+Zara Patel,STU1001,Mathematics,93.9,67.2,69.4,76.8
+Zara Patel,STU1001,English,63.3,83.3,94.7,80.4
+Zara Patel,STU1001,Chemistry,91.6,83.1,91.7,88.8

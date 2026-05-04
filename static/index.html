@@ -972,6 +972,7 @@ tbody td { padding: 12px 14px; vertical-align: middle; }
                 <th>Course</th>
                 <th onclick="stuSort('avg_grade')">Grade</th>
                 <th onclick="stuSort('attendance')">Attendance</th>
+                <th onclick="stuSort('fee_due')">Fees Due</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr></thead>
@@ -1033,6 +1034,30 @@ tbody td { padding: 12px 14px; vertical-align: middle; }
             <table>
               <thead><tr><th>Student</th><th>Subject</th><th>Mid-Term</th><th>Final</th><th>Assignment</th><th>Total</th><th>Grade</th><th>Progress</th><th id="grade-action-th">Actions</th></tr></thead>
               <tbody id="grade-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- FEES -->
+      <div class="page" id="page-fees">
+        <div class="toolbar">
+          <div class="toolbar-search">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text3);flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input placeholder="Search fees..." id="fee-search" list="fee-search-list" oninput="renderFees()">
+            <datalist id="fee-search-list"></datalist>
+          </div>
+          <select class="form-control" style="width:170px" id="fee-student" onchange="renderFees()">
+            <option value="">All Students</option>
+          </select>
+          <button class="btn btn-primary btn-sm" id="btn-add-fee">+ Fee</button>
+        </div>
+        <div id="fee-summary" class="stat-grid" style="margin-bottom:12px;"></div>
+        <div class="card">
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>Student</th><th>Student ID</th><th>Total</th><th>Paid</th><th>Due</th><th>Status</th><th>Due Date</th><th>Description</th><th id="fee-action-th">Actions</th></tr></thead>
+              <tbody id="fee-tbody"></tbody>
             </table>
           </div>
         </div>
@@ -1217,6 +1242,33 @@ tbody td { padding: 12px 14px; vertical-align: middle; }
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-fee">
+  <div class="modal">
+    <button class="close-btn" onclick="closeModal('modal-fee')">&#10005;</button>
+    <h3 id="modal-fee-title">Add Fee</h3>
+    <input type="hidden" id="fee-edit-id">
+    <div class="form-row">
+      <div class="form-group"><label>Student ID</label><input class="form-control" id="fee-student-code" list="fee-students-list" placeholder="STU1001"></div>
+      <div class="form-group"><label>Total Amount</label><input class="form-control" id="fee-total" type="number" min="0" value="0"></div>
+    </div>
+    <datalist id="fee-students-list"></datalist>
+    <div class="form-row">
+      <div class="form-group"><label>Amount Paid</label><input class="form-control" id="fee-paid" type="number" min="0" value="0"></div>
+      <div class="form-group"><label>Due Date</label><input class="form-control" id="fee-due" type="date"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Status</label>
+        <select class="form-control" id="fee-status"><option>Due</option><option>Partial</option><option>Paid</option></select>
+      </div>
+      <div class="form-group"><label>Description</label><input class="form-control" id="fee-desc" placeholder="Fee details"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-fee')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveFee()">Save Fee</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-assign">
   <div class="modal">
     <button class="close-btn" onclick="closeModal('modal-assign')">&#10005;</button>
@@ -1322,7 +1374,7 @@ tbody td { padding: 12px 14px; vertical-align: middle; }
 <script>
 const API = '';
 let currentUser = null, currentPage = 'dashboard';
-let stuData = [], teaData = [], gradeData = [], assignData = [], matData = [], attData = [];
+let stuData = [], teaData = [], gradeData = [], assignData = [], matData = [], attData = [], feeData = [];
 let stuPage = 1, stuPerPage = 10, stuSortKey = 'name', stuSortDir = 1;
 let selectedStudents = new Set();
 let assignFilter = 'all';
@@ -1348,12 +1400,12 @@ const MENUS = {
   ],
   teacher: [
     {label:'Dashboard',page:'dashboard'},{label:'Students',page:'students'},{label:'Timetable',page:'timetable'},
-    {label:'Grades',page:'grades'},{label:'Assignments',page:'assignments'},{label:'Materials',page:'materials'},
+    {label:'Grades',page:'grades'},{label:'Fees',page:'fees'},{label:'Assignments',page:'assignments'},{label:'Materials',page:'materials'},
     {label:'Attendance',page:'attendance'},{label:'Profile',page:'profile'},
   ],
   student: [
     {label:'Dashboard',page:'dashboard'},{label:'Timetable',page:'timetable'},{label:'My Grades',page:'grades'},
-    {label:'Assignments',page:'assignments'},{label:'Materials',page:'materials'},{label:'Profile',page:'profile'},
+    {label:'Fees',page:'fees'},{label:'Assignments',page:'assignments'},{label:'Materials',page:'materials'},{label:'Profile',page:'profile'},
   ],
 };
 
@@ -1430,13 +1482,19 @@ function setupRolePermissions() {
   const role = currentUser.role;
   const showAdd = role === 'admin' || role === 'teacher';
   const showAdminOnly = role === 'admin';
-  ['btn-add-stu','btn-add-tea','btn-add-grade','btn-add-assign','btn-add-mat','btn-add-tt','btn-add-ann'].forEach(id=>{
+  ['btn-add-stu','btn-add-tea','btn-add-grade','btn-add-assign','btn-add-mat','btn-add-tt','btn-add-ann','btn-add-fee'].forEach(id=>{
     const el = document.getElementById(id);
     if (el) el.style.display = showAdd ? '' : 'none';
   });
+  const feeFilter = document.getElementById('fee-student');
+  if (feeFilter) feeFilter.style.display = role === 'admin' || role === 'teacher' ? '' : 'none';
   if (!showAdminOnly) {
     const ta = document.getElementById('tea-action-th');
     if (ta) ta.style.display = 'none';
+  }
+  if (!showAdd) {
+    const fa = document.getElementById('fee-action-th');
+    if (fa) fa.style.display = 'none';
   }
 }
 
@@ -1482,12 +1540,14 @@ function updateSearchDatalists(){
   setDatalistOptions('stu-search-list', [...stuData.map(s=>s.name), ...stuData.map(s=>s.student_id)]);
   setDatalistOptions('tea-search-list', [...teaData.map(t=>t.name), ...teaData.map(t=>t.subject)]);
   setDatalistOptions('grade-search-list', [...gradeData.map(g=>g.student_name), ...gradeData.map(g=>g.student_id)]);
+  setDatalistOptions('fee-search-list', [...feeData.map(f=>f.student_name), ...feeData.map(f=>f.student_code), ...feeData.map(f=>f.description)]);
   setDatalistOptions('mat-search-list', [...matData.map(m=>m.title), ...matData.map(m=>m.subject)]);
   setDatalistOptions('att-search-list', [...attData.map(a=>a.name), ...attData.map(a=>a.sid||a.student_id)]);
   setDatalistOptions('global-search-list', [
     ...stuData.map(s=>s.name), ...stuData.map(s=>s.student_id),
     ...teaData.map(t=>t.name), ...teaData.map(t=>t.subject),
     ...gradeData.map(g=>g.student_name), ...gradeData.map(g=>g.student_id),
+    ...feeData.map(f=>f.student_name), ...feeData.map(f=>f.student_code), ...feeData.map(f=>f.description),
     ...matData.map(m=>m.title), ...matData.map(m=>m.subject),
     ...attData.map(a=>a.name), ...attData.map(a=>a.sid||a.student_id)
   ]);
@@ -1502,7 +1562,7 @@ async function navigate(page) {
   if (pe) pe.classList.add('active');
   if (ne) ne.classList.add('active');
   const titles = {dashboard:'Dashboard',students:'Students',teachers:'Teachers',timetable:'Timetable',
-    grades:'Grades',assignments:'Assignments',materials:'Study Materials',attendance:'Attendance',profile:'My Profile'};
+    grades:'Grades',fees:'Fees',assignments:'Assignments',materials:'Study Materials',attendance:'Attendance',profile:'My Profile'};
   document.getElementById('page-title').textContent = titles[page]||page;
   await loadPage(page);
 }
@@ -1513,6 +1573,7 @@ async function loadPage(page) {
   if (page==='teachers')    await loadTeachers();
   if (page==='timetable')   await loadTimetable();
   if (page==='grades')      await loadGrades();
+  if (page==='fees')        await loadFees();
   if (page==='assignments') await loadAssignments();
   if (page==='materials')   await loadMaterials();
   if (page==='attendance')  await loadAttendance();
@@ -1633,6 +1694,7 @@ function renderStudents() {
           <span style="font-size:11px;color:var(--text2);font-family:var(--font-mono)">${att||0}%</span>
         </div>
       </td>
+      <td><span style="font-family:var(--font-mono);font-size:12px;color:${s.fee_due>0?'var(--danger)':'var(--success)'}">${s.fee_due>0?`₹${s.fee_due.toFixed(2)}`:'Paid'}</span></td>
       <td><span class="status-badge ${s.status==='Active'?'status-active':'status-inactive'}"><div class="dot"></div>${s.status}</span></td>
       <td style="display:flex;gap:5px">
         ${canEdit?`<button class="btn btn-sm btn-outline" onclick="editStudent(${s.id})">Edit</button>`:''}
@@ -1851,6 +1913,8 @@ document.getElementById('btn-add-grade').onclick=()=>{
   document.getElementById('modal-grade').classList.add('open');
 };
 
+document.getElementById('btn-add-fee').onclick=()=>openFeeModal();
+
 function editGrade(id){
   const g=gradeData.find(x=>x.id===id); if(!g) return;
   document.getElementById('modal-grade-title').textContent='Edit Grade';
@@ -1875,6 +1939,143 @@ async function saveGrade(){
   const r=id?await api('PUT',`/api/grades/${id}`,data):await api('POST','/api/grades',data);
   if(r.error) return toast(r.error,'error');
   toast(id?'Grade updated':'Grade added'); closeModal('modal-grade'); await loadGrades();
+}
+
+async function loadFees(){
+  if ((currentUser.role === 'admin' || currentUser.role === 'teacher') && !stuData.length) {
+    stuData = await api('GET','/api/students');
+  }
+  feeData = await api('GET','/api/fees');
+  if (currentUser.role === 'admin' || currentUser.role === 'teacher') {
+    populateFeeStudentList();
+  }
+  renderFees();
+  updateSearchDatalists();
+}
+
+function renderFees(){
+  const q=document.getElementById('fee-search').value.toLowerCase();
+  const studentFilter=document.getElementById('fee-student').value;
+  const data=feeData.filter(f=>
+    (!q||f.student_name.toLowerCase().includes(q)||f.student_code.toLowerCase().includes(q)||String(f.total_amount).includes(q)||String(f.amount_paid).includes(q)||String(f.due_amount||0).includes(q)||(f.description||'').toLowerCase().includes(q))&&
+    (!studentFilter||f.student_code===studentFilter)
+  );
+  const totalAmount = data.reduce((sum, f)=>sum + (parseFloat(f.total_amount)||0), 0);
+  const totalPaid = data.reduce((sum, f)=>sum + (parseFloat(f.amount_paid)||0), 0);
+  const totalDue = data.reduce((sum, f)=>sum + (parseFloat(f.due_amount)||0), 0);
+  const paidCount = data.filter(f=>f.status==='Paid').length;
+  document.getElementById('fee-summary').innerHTML = `
+    <div class="stat-card"><div class="label">Records</div><div class="value">${data.length}</div></div>
+    <div class="stat-card"><div class="label">Total Fees</div><div class="value">₹${totalAmount.toFixed(2)}</div></div>
+    <div class="stat-card"><div class="label">Collected</div><div class="value">₹${totalPaid.toFixed(2)}</div></div>
+    <div class="stat-card"><div class="label">Outstanding</div><div class="value" style="color:${totalDue>0?'var(--danger)':'var(--success)'}">₹${totalDue.toFixed(2)}</div></div>
+    <div class="stat-card"><div class="label">Paid Records</div><div class="value">${paidCount}</div></div>
+  `;
+  const canEdit=currentUser.role==='admin' || currentUser.role==='teacher';
+  const canPay=currentUser.role==='admin' || currentUser.role==='teacher' || currentUser.role==='student' || currentUser.role==='parent';
+  document.getElementById('fee-tbody').innerHTML=data.map(f=>`<tr>
+      <td>${f.student_name}</td>
+      <td><span style="font-family:var(--font-mono);font-size:12px;color:var(--accent2)">${f.student_code}</span></td>
+      <td>₹${parseFloat(f.total_amount||0).toFixed(2)}</td>
+      <td>₹${parseFloat(f.amount_paid||0).toFixed(2)}</td>
+      <td>₹${parseFloat(f.due_amount||0).toFixed(2)}</td>
+      <td><span class="status-badge" style="${feeStatusStyle(f.status)}">${f.status}</span></td>
+      <td>${f.due_date||'—'}</td>
+      <td>${f.description||'—'}</td>
+      <td>
+        ${canPay && Number(f.due_amount)>0?`<button class="btn btn-sm btn-success" onclick="makeFeePayment(${f.id}, ${Number(f.due_amount)})">Pay</button>`:''}
+        ${canEdit?`<button class="btn btn-sm btn-outline" onclick="editFee(${f.id})">Edit</button><button class="btn btn-sm btn-danger" onclick="deleteFee(${f.id})">Del</button>`:''}
+      </td>
+    </tr>`).join('')||`<tr><td colspan="9"><div class="empty-state"><p>No fee records found</p></div></td></tr>`;
+}
+
+function feeStatusStyle(status){
+  return status==='Paid'
+    ? 'background:rgba(34,197,94,.08);color:var(--success);border:1px solid rgba(34,197,94,.2)'
+    : status==='Partial'
+      ? 'background:rgba(245,158,11,.08);color:var(--accent4);border:1px solid rgba(245,158,11,.2)'
+      : 'background:rgba(239,68,68,.08);color:var(--danger);border:1px solid rgba(239,68,68,.2)';
+}
+
+function populateFeeStudentList(){
+  const el = document.getElementById('fee-students-list');
+  if(!el) return;
+  el.innerHTML = stuData.map(s=>`<option value="${s.student_id}"></option>`).join('');
+  const filter = document.getElementById('fee-student');
+  if(filter){
+    filter.innerHTML = '<option value="">All Students</option>' + stuData.map(s=>`<option value="${s.student_id}">${s.name} (${s.student_id})</option>`).join('');
+  }
+}
+
+async function openFeeModal(){
+  document.getElementById('modal-fee-title').textContent='Add Fee';
+  document.getElementById('fee-edit-id').value='';
+  document.getElementById('fee-student-code').value='';
+  document.getElementById('fee-total').value='0';
+  document.getElementById('fee-paid').value='0';
+  document.getElementById('fee-due').value=new Date().toISOString().split('T')[0];
+  document.getElementById('fee-status').value='Due';
+  document.getElementById('fee-desc').value='';
+  document.getElementById('modal-fee').classList.add('open');
+}
+
+function editFee(id){
+  const f = feeData.find(x=>x.id===id); if(!f) return;
+  document.getElementById('modal-fee-title').textContent='Edit Fee';
+  document.getElementById('fee-edit-id').value=id;
+  document.getElementById('fee-student-code').value=f.student_code;
+  document.getElementById('fee-total').value=f.total_amount||0;
+  document.getElementById('fee-paid').value=f.amount_paid||0;
+  document.getElementById('fee-due').value=f.due_date||new Date().toISOString().split('T')[0];
+  document.getElementById('fee-status').value=f.status||'Due';
+  document.getElementById('fee-desc').value=f.description||'';
+  document.getElementById('modal-fee').classList.add('open');
+}
+
+async function saveFee(){
+  const id=document.getElementById('fee-edit-id').value;
+  const studentCode=document.getElementById('fee-student-code').value.trim();
+  const student = stuData.find(s=>s.student_id===studentCode);
+  if(!student){
+    return toast('Valid student ID is required','error');
+  }
+  const totalAmount = parseFloat(document.getElementById('fee-total').value)||0;
+  const paidAmount = parseFloat(document.getElementById('fee-paid').value)||0;
+  if(totalAmount < 0 || paidAmount < 0) return toast('Amounts cannot be negative','error');
+  if(paidAmount > totalAmount) return toast('Amount paid cannot exceed total amount','error');
+  const data={
+    student_id: student.id,
+    total_amount: totalAmount,
+    amount_paid: paidAmount,
+    due_date: document.getElementById('fee-due').value,
+    description: document.getElementById('fee-desc').value,
+    status: document.getElementById('fee-status').value,
+  };
+  const r = id ? await api('PUT', `/api/fees/${id}`, data) : await api('POST', '/api/fees', data);
+  if(r.error) return toast(r.error,'error');
+  toast(id?'Fee updated':'Fee added');
+  closeModal('modal-fee');
+  await loadFees();
+}
+
+async function makeFeePayment(id, dueAmount){
+  const raw = prompt(`Enter payment amount (max ₹${Number(dueAmount).toFixed(2)})`);
+  if(raw===null) return;
+  const amount = parseFloat(raw);
+  if(!Number.isFinite(amount) || amount<=0){
+    return toast('Enter a valid payment amount','error');
+  }
+  const r = await api('POST', `/api/fees/${id}/pay`, {amount});
+  if(r.error) return toast(r.error,'error');
+  toast('Payment recorded');
+  await loadFees();
+}
+
+async function deleteFee(id){
+  if(!await confirm2('Delete this fee record?','This action cannot be undone.')) return;
+  const r=await api('DELETE',`/api/fees/${id}`);
+  if(r.error) return toast(r.error,'error');
+  toast('Fee record deleted'); await loadFees();
 }
 
 async function deleteGrade(id){
@@ -1919,6 +2120,7 @@ function renderAssignments(){
         ${a.score!=null?`<div style="font-family:var(--font-mono);font-size:14px;font-weight:600;color:var(--accent3)">${a.score}/${a.max_score}</div>`:''}
       </div>
       ${(a.status==='pending' && a.url)?`<button class="btn btn-sm btn-success" onclick="event.stopPropagation();window.open('${a.url}','_blank')">Open</button>`:''}
+      ${a.url && a.status!=='graded'?`<button class="btn btn-sm btn-outline" onclick="event.stopPropagation();markAssignmentDone(${a.id})">Mark Done</button>`:''}
       ${canEdit?`<button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteAssignment(${a.id})">Del</button>`:''}
     </div>`).join('')||`<div class="empty-state"><p>No assignments found</p></div>`;
 }
@@ -1948,6 +2150,12 @@ async function deleteAssignment(id){
   const r=await api('DELETE',`/api/assignments/${id}`);
   if(r.error) return toast(r.error,'error');
   toast('Assignment deleted'); await loadAssignments();
+}
+
+async function markAssignmentDone(id){
+  const r = await api('PUT', `/api/assignments/${id}/status`, {status:'submitted'});
+  if(r.error) return toast(r.error,'error');
+  toast('Assignment marked done'); await loadAssignments();
 }
 
 async function loadMaterials(){
@@ -2130,7 +2338,7 @@ async function uploadAvatar(file){
 }
 
 async function api(method, url, data){
-  const opts={method, headers:{'Content-Type':'application/json'}};
+  const opts={method, headers:{'Content-Type':'application/json'}, credentials:'same-origin'};
   if(data) opts.body=JSON.stringify(data);
   try {
     const r=await fetch(url,opts);

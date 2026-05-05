@@ -1678,5 +1678,5 @@ def index():
 if __name__ == '__main__':
     os.makedirs('static', exist_ok=True)
     init_db()
-    print("✅ EduCore started at http://localhost:5000")
+    print("EduCore started at http://localhost:5000")
     app.run(debug=True, port=5000)
